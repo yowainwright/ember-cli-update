@@ -2,7 +2,6 @@
 
 const expect = require('chai').expect;
 const AddonTestApp = require('ember-cli-addon-tests').AddonTestApp;
-const spawn = require('cross-spawn');
 const semver = require('semver');
 const gitFixtures = require('git-fixtures');
 const debug = require('debug')('ember-cli-update');
@@ -70,31 +69,27 @@ describe('Acceptance | ember-addon', function() {
       if (isNode4Windows) {
         return new Promise(resolve => {
           (function start() {
-            let server = spawn('node', [
-              'node_modules/ember-cli/bin/ember',
-              'update',
-              '--to',
-              '2.16.0-beta.2'
-            ], {
-              cwd: app.path,
-              env: process.env
+            app.startServer({
+              command: 'update',
+              additionalArguments: [
+                '--to',
+                '2.16.0-beta.2'
+              ],
+              detectServerStart() {
+                return true;
+              }
+            }).then(() => {
+              clearTimeout(id);
+              resolve();
             });
 
             let id = setTimeout(() => {
               debug('timed out waiting for output');
-              server.stdout.removeAllListeners();
-              server.kill('SIGINT');
-              server.on('exit', () => {
+              app.stopServer().then(() => {
                 resetAndClean(app.path);
                 start();
               });
             }, 10000);
-
-            server.stdout.once('data', () => {
-              clearTimeout(id);
-              app.server = server;
-              resolve();
-            });
           })();
         });
       }
