@@ -14,7 +14,8 @@ const postCommit = gitFixtures.postCommit;
 const processIo = gitFixtures.processIo;
 const _fixtureCompare = gitFixtures.fixtureCompare;
 
-const isNode4Windows = process.platform === 'win32' && semver.satisfies(process.version, '4');
+const isWindows = process.platform === 'win32';
+const isNode4Windows = isWindows && semver.satisfies(process.version, '4');
 
 const commitMessage = 'add files';
 
@@ -54,7 +55,7 @@ function merge(app) {
 }
 
 describe('Acceptance | ember-addon', function() {
-  this.timeout(600000);
+  // this.timeout(600000);
 
   let app;
 
@@ -77,6 +78,12 @@ describe('Acceptance | ember-addon', function() {
       run('git clean -f', {
         cwd: app.path
       });
+      if (isWindows) {
+        // undo line ending change from npm install
+        run('git reset --hard', {
+          cwd: app.path
+        });
+      }
 
       if (isNode4Windows) {
         return new Promise(resolve => {
@@ -88,7 +95,9 @@ describe('Acceptance | ember-addon', function() {
               '2.14.1'
             ], {
               cwd: app.path,
-              env: process.env
+              env: {
+                DEBUG: process.env.DEBUG
+              }
             });
 
             let id = setTimeout(() => {
@@ -104,6 +113,13 @@ describe('Acceptance | ember-addon', function() {
                 });
                 start();
               });
+              try {
+                run('taskkill /IM vim.exe /F', {
+                  cwd: app.path
+                });
+              } catch (err) {
+                // ERROR: The process "vim.exe" not found.
+              }
             }, 10000);
 
             server.stdout.once('data', () => {
@@ -128,7 +144,7 @@ describe('Acceptance | ember-addon', function() {
     });
   });
 
-  it('works', function() {
+  it.only('works', function() {
     return merge(app).then(result => {
       let status = result.status;
 
