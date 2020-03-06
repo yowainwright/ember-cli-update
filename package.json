@@ -35,7 +35,7 @@
     "node": ">=4"
   },
   "dependencies": {
-    "debug": "^3.0.0",
+    "debug": "^3.2.6",
     "execa": "^0.10.0",
     "git-diff-apply": "^0.8.4",
     "merge-package.json": "^1.1.1",
